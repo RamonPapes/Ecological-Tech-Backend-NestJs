@@ -24,3 +24,6 @@ export const UserSchema = new Schema<User>(
   },
   { timestamps: true },
 );
+
+
+// TESTE COMMIT
