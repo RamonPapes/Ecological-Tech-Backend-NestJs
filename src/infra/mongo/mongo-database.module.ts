@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/ecological-tech'),
+    MongooseModule.forRoot('mongodb://localhost:27017/ecological-tech2'),
   ],
 })
 export class MongoDatabaseModule {}

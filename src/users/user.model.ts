@@ -1,18 +1,16 @@
-import { Schema, Document } from 'mongoose';
+import { Schema, Document, Types } from 'mongoose';
+import { MemoryGame, MemoryGameSchema } from 'src/games/memory-game/memory-game.model';
+import { WordSearchGame, WordSearchGameSchema } from 'src/games/word-search-game/word-search-game.model';
 
 export interface User extends Document {
   name: string;
   email: string;
   password: string;
-  role: UserRole;
   createdAt: Date;
   updatedAt: Date; 
-}
-
-export enum UserRole {
-  ADMIN = 'admin',
-  PROFESSOR = 'professor',
-  ALUNO = 'aluno',
+  achievements: Achievement[];
+  memoryGames: MemoryGame[];
+  wordSearchGames: WordSearchGame[]; 
 }
 
 export const UserSchema = new Schema<User>(
@@ -20,7 +18,14 @@ export const UserSchema = new Schema<User>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true},
-    role: { type: String, enum: Object.values(UserRole), default: UserRole.ALUNO },
+    achievements: [{name: String, date: Date}],
+    memoryGames: [MemoryGameSchema], // Matriz de jogos da memória incorporados
+    wordSearchGames: [WordSearchGameSchema], // Matriz de jogos da memória incorporados
   },
   { timestamps: true },
 );
+
+interface Achievement{
+  name: String;
+  date: Date;
+}

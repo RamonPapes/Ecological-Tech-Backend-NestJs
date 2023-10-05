@@ -1,5 +1,4 @@
 import { IsNotEmpty, IsEmail, MinLength, IsEnum } from 'class-validator';
-import { UserRole } from './user.model';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -12,8 +11,4 @@ export class CreateUserDto {
   @IsNotEmpty()
   @MinLength(6)
   password: string;
-
-  @IsNotEmpty()
-  @IsEnum(UserRole)
-  role: UserRole;
 }
