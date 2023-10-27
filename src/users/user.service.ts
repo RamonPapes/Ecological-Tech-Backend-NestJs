@@ -1,13 +1,16 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.model';
 import { CreateUserDto } from './create-user.dto';
 import * as bcrypt from 'bcrypt';
-import { WordSearchGameDto } from 'src/games/word-search-game/word-search-game.dto';
-import { WordSearchGame, WordSearchGameSchema, WordSearchGameModel } from 'src/games/word-search-game/word-search-game.model';
-import { MemoryGameDto } from 'src/games/memory-game/memory-game.dto';
-import { MemoryGameModel } from 'src/games/memory-game/memory-game.model';
+import { WordSearchGameDto } from 'games/word-search-game/word-search-game.dto';
+import { WordSearchGameModel } from 'games/word-search-game/word-search-game.model';
+import { MemoryGameDto } from 'games/memory-game/memory-game.dto';
+import { MemoryGameModel } from 'games/memory-game/memory-game.model';
+import { Types } from 'mongoose';
+import { PuzzleGameDto } from 'games/puzzle-game/puzzle-game.dto';
+import { PuzzleGameModel } from 'games/puzzle-game/puzzle-game.model';
 
 @Injectable()
 export class UsersService {
@@ -56,13 +59,19 @@ export class UsersService {
       erros: gameDto.erros,
     });
 
+    const hasWordSearchGame = user.wordSearchGames.some((wordSearchGame) => {
+      return wordSearchGame.time === gameDto.time && wordSearchGame.erros === gameDto.erros;
+    })
+
+    if (!hasWordSearchGame) {
+      const achievement = {
+        name: 'cacaPalavras',
+        date: new Date()
+      }
+      user.achievements.push(achievement);
+    }
+
     user.wordSearchGames.push(wordSearchGame);
-
-    // Verifique se o jogador tem menos de 3 erros e se já possui a conquista
-
-    // if (gameDto.erros < 3 && !this.userHasAchievement(user, 'Conquista X')) {
-    //   user.achievements.push({ name: 'Memória3Erros', date: new Date() });x
-    // }
 
     await user.save();
 
@@ -70,23 +79,102 @@ export class UsersService {
 
   }
 
-  async createMemoryGame(userId: string, gameDto: MemoryGameDto) {
+  async createMemoryGame(userId: string, gameDto: MemoryGameDto): Promise<User> {
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('ID de usuário inválido');
+    }
+
     const user = await this.userModel.findById(userId);
 
     if (!user) {
-      new NotFoundException("Usuário não encontrado!")
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // Verifique se o usuário não tem nenhum outro jogo da memória na lista
+    const hasMemoryGame = user.memoryGames.some((memoryGame) => {
+      return memoryGame.time === gameDto.time && memoryGame.erros === gameDto.erros;
+    });
+
+    if (!hasMemoryGame) {
+      // Adicione a conquista 'jogoMemoria' se o usuário não tiver nenhum outro jogo da memória
+      const achievement = {
+        name: 'jogoMemoria',
+        date: new Date()
+      }
+      user.achievements.push(achievement);
     }
 
     const MemoryGame = new MemoryGameModel({
       time: gameDto.time,
-      erros: gameDto.erros
-    })
+      erros: gameDto.erros,
+    });
 
     user.memoryGames.push(MemoryGame);
 
     await user.save();
 
     return user;
+  }
+
+  async createPuzzleGame(userId: string, gameDto: PuzzleGameDto): Promise<User> {
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('ID de usuário inválido');
+    }
+
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // Verifique se o usuário não tem nenhum outro jogo da memória na lista
+    const hasPuzzleGame = user.puzzleGames.some((puzzleGame) => {
+      return puzzleGame.turns === gameDto.turns;
+    });
+
+    if (!hasPuzzleGame) {
+      const achievement = {
+        name: 'quebraCabeca',
+        date: new Date()
+      }
+      user.achievements.push(achievement);
+    }
+
+    const PuzzleGame = new PuzzleGameModel({
+      turns: gameDto.turns
+    });
+
+    user.puzzleGames.push(PuzzleGame);
+
+    await user.save();
+
+    return user;
+  }
+
+  async getAllPuzzleGamesByUserId(userId: string) {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    return user.puzzleGames;
+  }
+
+  async getPuzzleGameById(userId: string, gameId: string) {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    const game = user.puzzleGames.find((game) => game.id === gameId);
+
+    if (!game) {
+      throw new NotFoundException('Jogo de caça-palavras não encontrado');
+    }
+
+    return game;
   }
 
   async getAllWordSearchGamesByUserId(userId: string) {
@@ -140,7 +228,6 @@ export class UsersService {
 
     return game;
   }
-
 
   private userHasAchievement(user: User, achievementName: string): boolean {
     return user.achievements.some((achievement) => achievement.name === achievementName);

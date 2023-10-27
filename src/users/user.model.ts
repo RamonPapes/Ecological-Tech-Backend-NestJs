@@ -1,6 +1,7 @@
+import { MemoryGame, MemoryGameSchema } from 'games/memory-game/memory-game.model';
+import { PuzzleGame, PuzzleGameSchema } from 'games/puzzle-game/puzzle-game.model';
+import { WordSearchGame, WordSearchGameSchema } from 'games/word-search-game/word-search-game.model';
 import { Schema, Document, Types } from 'mongoose';
-import { MemoryGame, MemoryGameSchema } from 'src/games/memory-game/memory-game.model';
-import { WordSearchGame, WordSearchGameSchema } from 'src/games/word-search-game/word-search-game.model';
 
 export interface User extends Document {
   name: string;
@@ -10,7 +11,8 @@ export interface User extends Document {
   updatedAt: Date; 
   achievements: Achievement[];
   memoryGames: MemoryGame[];
-  wordSearchGames: WordSearchGame[]; 
+  wordSearchGames: WordSearchGame[];
+  puzzleGames: PuzzleGame[]; 
 }
 
 export const UserSchema = new Schema<User>(
@@ -21,6 +23,7 @@ export const UserSchema = new Schema<User>(
     achievements: [{name: String, date: Date}],
     memoryGames: [MemoryGameSchema], // Matriz de jogos da memória incorporados
     wordSearchGames: [WordSearchGameSchema], // Matriz de jogos da memória incorporados
+    puzzleGames: [PuzzleGameSchema],
   },
   { timestamps: true },
 );

@@ -5,9 +5,10 @@ import { User } from './user.model';
 import { CreateUserDto } from './create-user.dto';
 import { Response } from 'express';
 import { LoginDto } from './login.dto';
-import { WordSearchGameDto } from 'src/games/word-search-game/word-search-game.dto';
-import { MemoryGame } from 'src/games/memory-game/memory-game.model';
-
+import { WordSearchGameDto } from 'games/word-search-game/word-search-game.dto';
+import { MemoryGame } from 'games/memory-game/memory-game.model';
+import { PuzzleGameDto } from 'games/puzzle-game/puzzle-game.dto';
+import { MemoryGameDto } from 'games/memory-game/memory-game.dto';
 
 @Controller('users')
 export class UsersController {
@@ -49,10 +50,22 @@ export class UsersController {
     return this.usersService.getMemoryGameById(userId, gameId);
   }
 
+  @Get(':userId/memory-games')
+  getAllPuzzleGamesByUserId(@Param('userId') userId: string) {
+    return this.usersService.getAllPuzzleGamesByUserId(userId);
+  }
+
+  @Get(':userId/puzzle-game/:gameId')
+  getPuzzleGameById(
+    @Param('userId') userId: string,
+    @Param('gameId') gameId: string,
+  ) {
+    return this.usersService.getPuzzleGameById(userId, gameId);
+  }
+
   @Post()
   async create(@Body() user: CreateUserDto, @Res() res: Response): Promise<void> {
     const createdUser: User = await this.usersService.createUser(user);
-    console.log(createdUser);
     const userWithoutMetadata = {
       id: createdUser._id,
       name: createdUser.name,
@@ -76,7 +89,15 @@ export class UsersController {
   @Post('login')
   async login(@Body() loginDto: LoginDto): Promise<{ accessToken: string }> {
     const { email, password } = loginDto;
-    return this.authService.login(email, password);
+
+    const userId = await this.authService.login(email, password);
+
+    if (userId) {
+      return userId;
+    } else {
+      throw new UnauthorizedException('Invalid Credentials')
+    }
+
   }
 
   @Post(':userId/word-search-games')
@@ -90,9 +111,17 @@ export class UsersController {
   @Post(':userId/memory-games')
   async createMemoryGame(
     @Param('userId') userId: string,
-    @Body() gameDto: MemoryGame,
+    @Body() gameDto: MemoryGameDto,
   ) {
     return await this.usersService.createMemoryGame(userId, gameDto);
+  }
+
+  @Post(':userId/puzzle-games')
+  async createPuzzleGame(
+    @Param('userId') userId: string,
+    @Body() gameDto: PuzzleGameDto,
+  ) {
+    return await this.usersService.createPuzzleGame(userId, gameDto);
   }
 
 }

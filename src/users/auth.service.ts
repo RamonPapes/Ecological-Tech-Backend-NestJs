@@ -6,9 +6,9 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService, private usersService : UsersService) {}
+  constructor(private readonly jwtService: JwtService, private usersService: UsersService) { }
 
-  async login(email: string, password: string): Promise<{ accessToken: string }> {
+  async login(email: string, password: string) {
 
     const user = await this.usersService.getUserByEmail(email);
 
@@ -21,10 +21,8 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
-    const accessToken = this.generateToken(user);
-
-    return { accessToken };
+    console.log(user._id);
+    return user._id;
   }
 
   private generateToken(user: any): string {
@@ -40,5 +38,5 @@ export class AuthService {
   async comparePasswords(password: string, hashedPassword: string): Promise<boolean> {
     return compare(password, hashedPassword);
   }
-  
+
 }
